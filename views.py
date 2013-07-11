@@ -1,4 +1,5 @@
 # -*- coding:utf8 -*-
+from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 from imdjango.exceptions import *
 
 
@@ -22,6 +23,7 @@ class IMView(object):
 
         url(r'/foo', Foo())
     """
+    login_required = False
     def __call__(self, request, *args, **kwargs):
         def call_preprocessor():
             self.args = list(args)
@@ -41,11 +43,24 @@ class IMView(object):
                     return getattr(self, method_name)(request, *args, **kwargs)
             else:
                 raise UnsupportedMethodError("The method '%s' is not valid method for this request."%(self.request.method))
-
+        
+        def error_response(exception):
+            message = exception.message
+            if request.is_ajax():
+                return HttpResponse(json.dumps(dict(status=dict(code=str(exception.__class__.__name__), reason=exception.message.encode('utf8')))), mimetype='application/json')
+            else:
+                return render(request, 'error.html', {'error_message':message}, status=500)
+            
         self.request = request
-        args = call_preprocessor() or list(args)
-        return call_proper_request_processor(args, kwargs)
-
+        if self.login_required == True and not request.user.is_authenticated():
+            return HttpResponseRedirect('/login/?next=%s'%request.META['PATH_INFO'])
+        else:
+            try:
+                args = call_preprocessor() or list(args)
+                return call_proper_request_processor(args, kwargs)
+            except IMError, exception:
+                return error_response(exception)
+            
     def get_file_parameter (self, parameter_name, default=None, is_required=True):
         return self.get_parameter(parameter_name, parameter_pool=self.request.FILES, default=default, is_required=is_required)        
     

@@ -19,3 +19,6 @@ class IllegalStateError(IMError):
 
 class UnsupportedVersionError(IMError):
     pass
+
+class UnsupportedMethodError(IMError):
+    pass
