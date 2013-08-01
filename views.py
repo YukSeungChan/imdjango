@@ -1,7 +1,9 @@
 # -*- coding:utf8 -*-
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect
+from django.conf import settings
 from imdjango.exceptions import *
 
+import json
 
 class IMView(object):
     """
@@ -24,6 +26,9 @@ class IMView(object):
         url(r'/foo', Foo())
     """
     login_required = False
+    staff_login_required = False
+    superuser_login_required = False
+    
     def __call__(self, request, *args, **kwargs):
         def call_preprocessor():
             self.args = list(args)
@@ -50,10 +55,21 @@ class IMView(object):
                 return HttpResponse(json.dumps(dict(status=dict(code=str(exception.__class__.__name__), reason=exception.message.encode('utf8')))), mimetype='application/json')
             else:
                 return render(request, 'error.html', {'error_message':message}, status=500)
+        
+        def is_login_allowed():
+            if self.login_required == True and not request.user.is_authenticated():
+                return False
+            elif self.staff_login_required == True and not request.user.is_authenticated() and not request.user.is_staff:
+                return False
+            elif self.superuser_login_required == True and not request.user.is_authenticated() and not request.user.is_superuser:
+                return False
+            else:
+                return True
+            
             
         self.request = request
-        if self.login_required == True and not request.user.is_authenticated():
-            return HttpResponseRedirect('/login/?next=%s'%request.META['PATH_INFO'])
+        if not is_login_allowed():
+            return HttpResponseRedirect('%s?next=%s'%(settings.LOGIN_URL, request.META['PATH_INFO']))
         else:
             try:
                 args = call_preprocessor() or list(args)
