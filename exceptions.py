@@ -6,7 +6,7 @@ class IMError(Exception):
     def __str__ (self):
         return self.message
 
-class IMAPIrror(Exception):
+class IMAPIError(Exception):
     def __init__ (self, message):
         self.message = message
 
@@ -31,8 +31,8 @@ class UnsupportedVersionError(IMError):
 class UnsupportedMethodError(IMError):
     pass
 
-class APINoParameterError(IMAPIrror):
+class APINoParameterError(IMAPIError):
     pass
 
-class APIInvalidParameterError(IMAPIrror):
+class APIInvalidParameterError(IMAPIError):
     pass
