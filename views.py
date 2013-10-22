@@ -76,7 +76,7 @@ class IMView(object):
                 return call_proper_request_processor(args, kwargs)
             except IMError, exception:
                 return error_response(exception)
-            except IMAPIError, exception
+            except IMAPIError, exception:
                 return error_response(exception, True)
             
     def get_file_parameter (self, parameter_name, default=None, is_required=True):
