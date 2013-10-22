@@ -49,9 +49,9 @@ class IMView(object):
             else:
                 raise UnsupportedMethodError("The method '%s' is not valid method for this request."%(self.request.method))
         
-        def error_response(exception):
+        def error_response(exception, is_json_response=False):
             message = exception.message
-            if request.is_ajax():
+            if request.is_ajax() or is_json_response:
                 return HttpResponse(json.dumps(dict(status=dict(code=str(exception.__class__.__name__), reason=exception.message.encode('utf8')))), mimetype='application/json')
             else:
                 return render(request, 'error.html', {'error_message':message}, status=500)
@@ -76,6 +76,8 @@ class IMView(object):
                 return call_proper_request_processor(args, kwargs)
             except IMError, exception:
                 return error_response(exception)
+            except IMAPIError, exception
+                return error_response(exception, True)
             
     def get_file_parameter (self, parameter_name, default=None, is_required=True):
         return self.get_parameter(parameter_name, parameter_pool=self.request.FILES, default=default, is_required=is_required)        
